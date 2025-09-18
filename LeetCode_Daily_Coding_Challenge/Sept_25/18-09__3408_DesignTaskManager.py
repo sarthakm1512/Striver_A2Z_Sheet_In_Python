@@ -37,3 +37,54 @@ Constraints:
 * At most 2 * 10^5 calls will be made in total to add, edit, rmv, and execTop methods.
 * The input is generated such that taskId will be valid.
 """
+
+import heapq
+from typing import List
+
+class TaskManager:
+
+    def __init__(self, tasks: List[List[int]]):
+        self.task_to_user = {}
+        self.task_to_priority = {}
+        self.heap = []
+
+        for userId, taskId, priority in tasks:
+            self.task_to_user[taskId] = userId
+            self.task_to_priority[taskId] = priority
+            heapq.heappush(self.heap, (-priority, -taskId, taskId))
+
+    def add(self, userId: int, taskId: int, priority: int) -> None:
+        self.task_to_user[taskId] = userId
+        self.task_to_priority[taskId] = priority
+        heapq.heappush(self.heap, (-priority, -taskId, taskId))
+
+    def edit(self, taskId: int, newPriority: int) -> None:
+        self.task_to_priority[taskId] = newPriority
+        heapq.heappush(self.heap, (-newPriority, -taskId, taskId))
+
+    def rmv(self, taskId: int) -> None:
+        # Mark as removed by deleting from dictionaries
+        if taskId in self.task_to_user:
+            del self.task_to_user[taskId]
+        if taskId in self.task_to_priority:
+            del self.task_to_priority[taskId]
+
+    def execTop(self) -> int:
+        while self.heap:
+            priority, negTaskId, taskId = heapq.heappop(self.heap)
+
+            # Check if task is still valid
+            if taskId not in self.task_to_priority:
+                continue  # deleted earlier
+
+            if -priority != self.task_to_priority[taskId]:
+                continue  # outdated entry (old priority)
+
+            # Found the correct top task
+            userId = self.task_to_user[taskId]
+            # Remove it
+            del self.task_to_user[taskId]
+            del self.task_to_priority[taskId]
+            return userId
+
+        return -1  # no tasks available
